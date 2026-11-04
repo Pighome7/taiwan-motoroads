@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彎道戰報 MotoRoute TW - 台灣山路騎乘資訊平台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Elevation Profile -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#FF5500',
+                            yellow: '#FFCC00',
+                            cyan: '#00F0FF',
+                            dark: '#0F172A',
+                            card: '#1E293B',
+                            border: '#334155'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Microsoft JhengHei', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars & glows */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5500;
+        }
+        .neon-border {
+            box-shadow: 0 0 10px rgba(255, 85, 0, 0.2);
+        }
+        .neon-border:hover {
+            box-shadow: 0 0 15px rgba(255, 85, 0, 0.5);
+        }
+        .pulse-danger {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body class="bg-brand-dark text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-orange selection:text-white pb-12">
+
+    <!-- Header / Navigation -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-brand-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('explore')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center text-slate-900 font-black text-xl shadow-lg shadow-brand-orange/30">
+                        <i class="fa-solid font-bold fa-motorcycle"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-black tracking-wider text-white">彎道戰報 <span class="text-brand-orange text-sm font-semibold border border-brand-orange/50 px-1.5 py-0.5 rounded ml-1">TW</span></span>
+                        <p class="text-xs text-slate-400 hidden sm:block">台灣機車山路即時路況與資訊平台</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1">
+                    <button onclick="switchTab('explore')" id="nav-explore" class="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition bg-brand-orange text-white">
+                        <i class="fa-solid fa-map-location-dot"></i> 路線探索
+                    </button>
+                    <button onclick="switchTab('community')" id="nav-community" class="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-bullhorn"></i> 即時回報
+                        <span id="report-badge-count" class="bg-brand-orange text-white text-xs px-2 py-0.5 rounded-full font-bold">5</span>
+                    </button>
+                    <button onclick="switchTab('safety')" id="nav-safety" class="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-shield-halved"></i> 騎士裝備與安全
+                    </button>
+                </nav>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center gap-2">
+                    <button onclick="openReportModal()" class="bg-gradient-to-r from-brand-orange to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-3.5 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 shadow-md shadow-brand-orange/20 active:scale-95 transition">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>即時通報</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom/Top Navigation Bar -->
+        <div class="md:hidden flex border-t border-slate-800 bg-slate-900/95 text-xs font-semibold">
+            <button onclick="switchTab('explore')" id="mobile-nav-explore" class="flex-1 py-3 text-center text-brand-orange border-b-2 border-brand-orange flex flex-col items-center gap-1">
+                <i class="fa-solid fa-map-location-dot text-base"></i> 路線探索
+            </button>
+            <button onclick="switchTab('community')" id="mobile-nav-community" class="flex-1 py-3 text-center text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-bullhorn text-base"></i> 車友即時回報
+            </button>
+            <button onclick="switchTab('safety')" id="mobile-nav-safety" class="flex-1 py-3 text-center text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-shield-halved text-base"></i> 安全與天氣
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-grow">
+
+        <!-- TAB 1: EXPLORE / ROAD DIRECTORY -->
+        <section id="tab-explore" class="space-y-6">
+
+            <!-- Hero & Quick Weather Alert Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-brand-card to-slate-900 p-4 sm:p-6 rounded-2xl border border-brand-border flex flex-col lg:flex-row items-center justify-between gap-4 shadow-xl">
+                <div class="space-y-1 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+                        <i class="fa-solid fa-triangle-exclamation"></i> 山區氣候警示：中高海拔午後易有濃霧與局部陣雨
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">全台熱門機車跑山路線即時戰報</h1>
+                    <p class="text-xs sm:text-sm text-slate-400">掌握全台高山公路、跑山聖地之即時路況、測速點位、加油站與地形高度曲線。</p>
+                </div>
+                
+                <!-- Quick Weather Widget Snippet -->
+                <div class="flex items-center gap-4 bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 w-full lg:w-auto justify-around sm:justify-start">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-sun-rain text-2xl text-brand-cyan"></i>
+                        <div>
+                            <p class="text-xs text-slate-400">合歡山/武嶺 (台14甲)</p>
+                            <p class="text-sm font-bold text-slate-200">14°C <span class="text-xs text-brand-cyan font-normal">降雨率 30%</span></p>
+                        </div>
+                    </div>
+                    <div class="h-8 w-px bg-slate-700"></div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-meatball text-2xl text-brand-yellow"></i>
+                        <div>
+                            <p class="text-xs text-slate-400">北宜公路 (台9線)</p>
+                            <p class="text-sm font-bold text-slate-200">22°C <span class="text-xs text-emerald-400 font-normal">路面乾燥</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Filter Controls -->
+            <div class="bg-brand-card p-4 rounded-xl border border-brand-border space-y-4 shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    
+                    <!-- Search Bar -->
+                    <div class="md:col-span-5 relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                        <input type="text" id="search-input" oninput="filterRoads()" placeholder="搜尋路線名稱、省道編號 (例: 北宜, 台8線, 136...)" class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-orange transition">
+                    </div>
+
+                    <!-- Region Selector -->
+                    <div class="md:col-span-3">
+                        <select id="filter-region" onchange="filterRoads()" class="w-full py-2.5 px-3 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-brand-orange transition">
+                            <option value="all">全台灣 (所有地區)</option>
+                            <option value="north">北部地區 (基/新北/宜/桃/竹)</option>
+                            <option value="central">中部地區 (苗/中/彰/投/雲)</option>
+                            <option value="south">南部地區 (嘉/台南/高/屏)</option>
+                            <option value="east">東部地區 (花蓮/台東)</option>
+                        </select>
+                    </div>
+
+                    <!-- Road Type Selector -->
+                    <div class="md:col-span-2">
+                        <select id="filter-type" onchange="filterRoads()" class="w-full py-2.5 px-3 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-brand-orange transition">
+                            <option value="all">所有路線類型</option>
+                            <option value="technical">技術連續彎道</option>
+                            <option value="scenic">高海拔/風景景觀</option>
+                            <option value="express">快速幹道/長途公路</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Selector -->
+                    <div class="md:col-span-2">
+                        <select id="filter-status" onchange="filterRoads()" class="w-full py-2.5 px-3 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-brand-orange transition">
+                            <option value="all">所有路況狀態</option>
+                            <option value="smooth">順暢良好</option>
+                            <option value="construction">施工管制 / 單向</option>
+                            <option value="fog">濃霧 / 濕滑</option>
+                            <option value="warning">小心落石 / 警示</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Active Filter Tags / Quick Chips -->
+                <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800 text-xs">
+                    <span class="text-slate-400 font-semibold">熱門快速篩選:</span>
+                    <button onclick="setQuickFilter('北宜')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"># 北宜公路</button>
+                    <button onclick="setQuickFilter('武嶺')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"># 中橫/武嶺</button>
+                    <button onclick="setQuickFilter('136')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"># 136縣道</button>
+                    <button onclick="setQuickFilter('阿里山')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"># 阿里山公路</button>
+                    <button onclick="resetFilters()" class="ml-auto text-brand-orange hover:underline"><i class="fa-solid fa-rotate-left"></i> 重設條件</button>
+                </div>
+            </div>
+
+            <!-- Road Cards Grid & Detail Modal Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Main Cards Grid (Left side) -->
+                <div id="road-cards-container" class="lg:col-span-7 space-y-4">
+                    <!-- Road Cards dynamically populated here -->
+                </div>
+
+                <!-- Interactive Map / Elevation Profile Visualizer Panel (Right Side - Sticky on Desktop) -->
+                <div class="lg:col-span-5">
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 sticky top-20 shadow-xl space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div>
+                                <h3 id="profile-title" class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-area text-brand-orange"></i> 路線剖面與深度分析
+                                </h3>
+                                <p id="profile-subtitle" class="text-xs text-slate-400">點擊左側路線查看海拔曲線與站點</p>
+                            </div>
+                            <span id="profile-badge" class="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-full font-mono border border-slate-700">未選擇</span>
+                        </div>
+
+                        <!-- Chart Canvas -->
+                        <div class="relative h-56 w-full bg-slate-900/60 rounded-lg p-2 border border-slate-800">
+                            <canvas id="elevationChart"></canvas>
+                        </div>
+
+                        <!-- Selected Route Details -->
+                        <div id="selected-route-info" class="space-y-3 text-xs text-slate-300 border-t border-slate-800 pt-3">
+                            <div class="grid grid-cols-2 gap-2 text-center">
+                                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                    <span class="text-slate-400 block mb-0.5">最高海拔</span>
+                                    <span id="info-max-alt" class="text-base font-black text-brand-yellow">-- m</span>
+                                </div>
+                                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                    <span class="text-slate-400 block mb-0.5">路線總長</span>
+                                    <span id="info-length" class="text-base font-black text-brand-cyan">-- km</span>
+                                </div>
+                            </div>
+
+                            <!-- Speed Trap / Key Points Breakdown -->
+                            <div>
+                                <h4 class="font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-gas-pump text-amber-400"></i> 重要補給站點與加油站
+                                </h4>
+                                <ul id="info-gas-stations" class="space-y-1 text-slate-400 pl-4 list-disc">
+                                    <li>請先從左側列表選擇一條山路。</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-camera text-red-400"></i> 區間測速 / 執法重點區
+                                </h4>
+                                <ul id="info-speed-traps" class="space-y-1 text-slate-400 pl-4 list-disc">
+                                    <li>點擊路線以載入測速與執法熱點警示。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 2: LIVE COMMUNITY REPORTS -->
+        <section id="tab-community" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-brand-card p-5 rounded-xl border border-brand-border">
+                <div>
+                    <h2 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-satellite-dish text-brand-orange animate-pulse"></i> 車友即時回報中心
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">即時分享臨檢點、道路坑洞、落石、大霧與路面油污等情報。</p>
+                </div>
+                <button onclick="openReportModal()" class="bg-brand-orange hover:bg-orange-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-orange/20 transition">
+                    <i class="fa-solid fa-comment-medical"></i> 我要新增回報
+                </button>
+            </div>
+
+            <!-- Filter Reports Bar -->
+            <div class="flex flex-wrap items-center gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs">
+                <span class="text-slate-400 font-bold">動態分類:</span>
+                <button onclick="filterCommunityReports('all')" class="report-filter-btn px-3 py-1.5 rounded-lg bg-brand-orange text-white font-bold">全部</button>
+                <button onclick="filterCommunityReports('police')" class="report-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🚨 執法/測速</button>
+                <button onclick="filterCommunityReports('hazard')" class="report-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">⚠️ 路況障礙/落石</button>
+                <button onclick="filterCommunityReports('weather')" class="report-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🌫️ 天候大霧/暴雨</button>
+            </div>
+
+            <!-- Report Timeline List -->
+            <div id="reports-list-container" class="space-y-3">
+                <!-- Dynamically populated report items -->
+            </div>
+        </section>
+
+        <!-- TAB 3: SAFETY & WEATHER DASHBOARD -->
+        <section id="tab-safety" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Daylight Tracker -->
+                <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sun text-amber-400"></i> 高山日光與起霧追蹤
+                        </h3>
+                        <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded">安全提示</span>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1.5 border-b border-slate-800">
+                            <span class="text-slate-400">本日山區日出時間</span>
+                            <span class="font-mono font-bold text-slate-200">06:12 AM</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800">
+                            <span class="text-slate-400">高山常見起霧時段</span>
+                            <span class="font-mono font-bold text-brand-yellow">13:00 - 16:30</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800">
+                            <span class="text-slate-400">本日山區日落預計</span>
+                            <span class="font-mono font-bold text-slate-200">17:35 PM</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-900 rounded-lg text-slate-300 leading-relaxed text-xs">
+                            <i class="fa-solid fa-circle-info text-brand-cyan mr-1"></i>
+                            高海拔道路（如台14甲合歡山、台8線中橫）在午後 2 點後容易出現視覺能見度小於 10 公尺之濃霧，建議提早下山。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Contacts -->
+                <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-3">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-phone-volume text-red-500"></i> 山區緊急救助電話
+                    </h3>
+                    <div class="space-y-2 text-xs">
+                        <a href="tel:110" class="flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 rounded-lg transition border border-slate-800">
+                            <span class="font-bold text-slate-200">報案求助 (警政署)</span>
+                            <span class="font-mono text-brand-orange font-bold text-sm">110</span>
+                        </a>
+                        <a href="tel:119" class="flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 rounded-lg transition border border-slate-800">
+                            <span class="font-bold text-slate-200">消防/救護/山難救助</span>
+                            <span class="font-mono text-brand-orange font-bold text-sm">119</span>
+                        </a>
+                        <a href="tel:1968" class="flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 rounded-lg transition border border-slate-800">
+                            <span class="font-bold text-slate-200">高速公路/省道客服</span>
+                            <span class="font-mono text-brand-cyan font-bold text-sm">1968</span>
+                        </a>
+                        <a href="tel:0800001801" class="flex items-center justify-between p-2.5 bg-slate-900 hover:bg-slate-800 rounded-lg transition border border-slate-800">
+                            <span class="font-bold text-slate-200">公路局路況查詢免費專線</span>
+                            <span class="font-mono text-slate-300 font-bold">0800-001-801</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tire Pressure & Temp Tip -->
+                <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-3">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-temperature-arrow-down text-brand-cyan"></i> 高山氣溫與胎壓換算
+                    </h3>
+                    <p class="text-xs text-slate-400">海拔每上升 1,000 公尺，氣溫約下降 6.5°C。冷胎壓也會隨氣溫降低而下降。</p>
+                    <div class="p-3 bg-slate-900 rounded-lg space-y-2 border border-slate-800 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">平地氣溫 (28°C)</span>
+                            <span class="text-slate-200">建議原廠胎壓</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-brand-cyan">
+                            <span>武嶺 (3,275m) 預計氣溫</span>
+                            <span>約 6.5°C ~ 10°C</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 border-t border-slate-800 pt-1.5 mt-1">
+                            ⚠️ 攻頂前請確認胎紋深度，山區低溫會降低橡膠抓地力，前煞車與傾角請更加平順。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rider Interactive Safety Checklist -->
+            <div class="bg-brand-card p-6 rounded-xl border border-brand-border space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-brand-orange"></i> 出發前騎士與車輛安全檢查清單 (Interactive Checklist)
+                        </h3>
+                        <p class="text-xs text-slate-400">點擊勾選確認您的車輛狀況，確保完美無虞的跑山體驗。</p>
+                    </div>
+                    <span id="checklist-progress" class="text-sm font-bold text-brand-orange bg-brand-orange/10 px-3 py-1 rounded-full border border-brand-orange/30">0 / 6 完成</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="checklist-items">
+                    <!-- Dynamic Checkboxes -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- NEW REPORT MODAL -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeReportModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-black text-white flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-brand-orange"></i> 新增山路即時回報
+            </h3>
+            
+            <form id="report-form" onsubmit="submitReport(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">選擇路線</label>
+                    <select id="report-road-select" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-brand-orange">
+                        <option value="">-- 請選擇路線 --</option>
+                        <!-- Options generated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">通報類型</label>
+                    <select id="report-type-select" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-brand-orange">
+                        <option value="police">🚨 執法 / 測速 / 臨檢</option>
+                        <option value="hazard">⚠️ 道路障礙 / 施工 / 落石 / 油污</option>
+                        <option value="weather">🌫️ 天候大霧 / 濃霧 / 豪雨</option>
+                        <option value="traffic">🏍️ 車流壅塞 / 事故事故</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">精確里程 / 地標 (例如: 26K財茂彎、清境農場附近)</label>
+                    <input type="text" id="report-location-input" required placeholder="例如：26.5K 處" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">詳細說明 (請簡短明確)</label>
+                    <textarea id="report-content-input" rows="3" required placeholder="例如：過彎處有碎石與沙土，請車友放慢速度過彎。" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-brand-orange"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeReportModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-bold">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-orange hover:bg-orange-600 text-white rounded-lg font-bold shadow-lg shadow-brand-orange/20">發布通報</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Application Logic Script -->
+    <script>
+        // DATA STORE: Taiwan Mountain Roads Database
+        const roadData = [
+            {
+                id: "beiyi",
+                name: "北宜公路 (台9線)",
+                code: "台9線",
+                region: "north",
+                regionName: "北部",
+                type: "technical",
+                typeName: "技術連續彎道",
+                length: 58,
+                maxAlt: 538,
+                difficulty: 4,
+                status: "smooth",
+                statusName: "路況良好",
+                statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+                description: "台灣北部最經典機車跑山聖地，以多彎及經典財茂彎聞名，沿途茶園景色宜人，全線多處實施區間測速。",
+                elevationProfile: [
+                    { km: 0, alt: 20, name: "新店" },
+                    { km: 15, alt: 480, name: "海倫咖啡" },
+                    { km: 26, alt: 350, name: "財茂彎" },
+                    { km: 38, alt: 538, name: "坪林" },
+                    { km: 48, alt: 500, name: "石牌縣界" },
+                    { km: 58, alt: 10, name: "頭城" }
+                ],
+                gasStations: ["中油坪林站 (19:00關閉)", "中油頭城站"],
+                speedTraps: ["19K - 23.1K 區間測速", "26.2K - 32.3K 區間測速", "56.6K 追風點/移動式測速"]
+            },
+            {
+                id: "wuling",
+                name: "中橫公路霧社支線 (台14甲線)",
+                code: "台14甲",
+                region: "central",
+                regionName: "中部",
+                type: "scenic",
+                typeName: "高海拔景觀",
+                length: 41,
+                maxAlt: 3275,
+                difficulty: 5,
+                status: "fog",
+                statusName: "濃霧 / 氣溫低",
+                statusBg: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+                description: "公路最高點武嶺所在地，高山大景極具震撼力。氣候變化劇烈，午後極易有大霧與低溫降雨。",
+                elevationProfile: [
+                    { km: 0, alt: 1148, name: "霧社" },
+                    { km: 10, alt: 1750, name: "清境農場" },
+                    { km: 22, alt: 2750, name: "翠峰" },
+                    { km: 29, alt: 3002, name: "昆陽" },
+                    { km: 31.5, alt: 3275, name: "武嶺" },
+                    { km: 41, alt: 2565, name: "大禹嶺" }
+                ],
+                gasStations: ["中油清境站 (全台最高24hr之一)", "中油關原站 (知名肉粽)"],
+                speedTraps: ["清境農場路段常有警察攔檢", "翠峰至昆陽路段狹窄請勿違規超車"]
+            },
+            {
+                id: "136",
+                name: "136縣道 (太平 - 國姓)",
+                code: "市道136",
+                region: "central",
+                regionName: "中部",
+                type: "technical",
+                typeName: "技術連續彎道",
+                length: 22,
+                maxAlt: 720,
+                difficulty: 4,
+                status: "smooth",
+                statusName: "路況良好",
+                statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+                description: "台中騎士熱門練角聖地，髮夾彎密集（赤崁頂為代表地標）。路面品質優良但部分路段盲彎多。",
+                elevationProfile: [
+                    { km: 0, alt: 100, name: "太平一號橋" },
+                    { km: 8, alt: 320, name: "護國清涼寺" },
+                    { km: 15, alt: 720, name: "赤崁頂" },
+                    { km: 22, alt: 250, name: "國姓萊爾富" }
+                ],
+                gasStations: ["太平長龍路加油站", "國姓中油站"],
+                speedTraps: ["136縣道 36K-40K 常有三腳架固定式測速", "赤崁頂周邊盲彎請勿壓線"]
+            },
+            {
+                id: "alishan",
+                name: "阿里山公路 (台18線)",
+                code: "台18線",
+                region: "south",
+                regionName: "南部",
+                type: "scenic",
+                typeName: "高海拔景觀",
+                length: 88,
+                maxAlt: 2200,
+                difficulty: 3,
+                status: "construction",
+                statusName: "局部施工管制",
+                statusBg: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+                description: "連接嘉義市區與阿里山國家森林遊樂區，路幅寬廣，風景優美，唯午後經常起霧且遊覽車較多。",
+                elevationProfile: [
+                    { km: 0, alt: 50, name: "中埔" },
+                    { km: 35, alt: 300, name: "觸口" },
+                    { km: 50, alt: 1200, name: "隙頂" },
+                    { km: 64, alt: 1400, name: "石棹" },
+                    { km: 88, alt: 2200, name: "阿里山森林遊樂區" }
+                ],
+                gasStations: ["中油石棹站 (19:00關畢)", "中油阿里山站"],
+                speedTraps: ["觸口段常有定點測速", "隙頂至石棹段午後濃霧警示"]
+            },
+            {
+                id: "wutai",
+                name: "霧台公路 (台24線)",
+                code: "台24線",
+                region: "south",
+                regionName: "南部",
+                type: "technical",
+                typeName: "技術連續彎道",
+                length: 48,
+                maxAlt: 1000,
+                difficulty: 4,
+                status: "smooth",
+                statusName: "路況良好",
+                statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+                description: "南部機車跑山天堂，途經谷川大橋（台灣最高橋墩），沿途原住民部落文化特色濃厚。",
+                elevationProfile: [
+                    { km: 0, alt: 80, name: "水門" },
+                    { km: 15, alt: 300, name: "三地門" },
+                    { km: 32, alt: 650, name: "谷川大橋" },
+                    { km: 40, alt: 800, name: "霧台部落" },
+                    { km: 48, alt: 1000, name: "阿禮部落" }
+                ],
+                gasStations: ["水門中油加油站 (進入山區最後補給)"],
+                speedTraps: ["水門至三地門段限速50", "谷川大橋觀景台前有不定期測速"]
+            },
+            {
+                id: "yangjin",
+                name: "陽金公路 (台2A)",
+                code: "台2甲",
+                region: "north",
+                regionName: "北部",
+                type: "technical",
+                typeName: "技術連續彎道",
+                length: 38,
+                maxAlt: 800,
+                difficulty: 3,
+                status: "warning",
+                statusName: "注意落石/濕滑",
+                statusBg: "bg-red-500/20 text-red-400 border-red-500/40",
+                description: "貫穿陽明山國家公園連接金山，多連續急彎與硫磺氣候，冬季受東北季風影響經常路面濕滑。",
+                elevationProfile: [
+                    { km: 0, alt: 10, name: "金山" },
+                    { km: 12, alt: 450, name: "馬槽橋" },
+                    { km: 22, alt: 800, name: "小油坑" },
+                    { km: 30, alt: 400, name: "仰德大道口" },
+                    { km: 38, alt: 20, name: "台北士林" }
+                ],
+                gasStations: ["金山中油站", "士林仰德加油站"],
+                speedTraps: ["馬槽橋前直線速限 40km/h", "小油坑路段常有檢舉與測速"]
+            }
+        ];
+
+        // Mock Live Reports Data
+        let liveReports = [
+            {
+                id: 1,
+                roadId: "beiyi",
+                roadName: "北宜公路 (台9線)",
+                type: "police",
+                typeName: "🚨 執法/測速",
+                badgeClass: "bg-red-500/20 text-red-400 border-red-500/40",
+                location: "26.5K 財茂彎",
+                content: "路邊有移動式測速拍照，過彎後請勿補油過猛，車友互相招呼提醒！",
+                time: "10 分鐘前",
+                author: "重車小狂"
+            },
+            {
+                id: 2,
+                roadId: "wuling",
+                roadName: "中橫公路 (台14甲線)",
+                type: "weather",
+                typeName: "🌫️ 天候大霧",
+                badgeClass: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+                location: "昆陽至武嶺 31K",
+                content: "開始下起濃霧，視覺能見度不足15公尺，請開啟雙黃燈並放慢車速，路面有些許微濕。",
+                time: "25 分鐘前",
+                author: "高山巡航者"
+            },
+            {
+                id: 3,
+                roadId: "136",
+                roadName: "136縣道",
+                type: "hazard",
+                typeName: "⚠️ 道路障礙",
+                badgeClass: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+                location: "赤崁頂下坡 18K 彎道",
+                content: "盲彎出彎處有一小堆山壁掉落的小碎石與沙土，路線請勿走太外側！",
+                time: "1 小時前",
+                author: "台中R3哥"
+            },
+            {
+                id: 4,
+                roadId: "alishan",
+                roadName: "阿里山公路 (台18線)",
+                type: "hazard",
+                typeName: "🚧 道路施工",
+                badgeClass: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+                location: "62K 石棹段",
+                content: "單向工程管制中，開放雙向輪流通車，約需等待 5-10 分鐘。",
+                time: "2 小時前",
+                author: "山道小霸王"
+            }
+        ];
+
+        // Checklist Data
+        const checklistItems = [
+            { id: "c1", title: "胎壓與胎紋深度", desc: "確認冷胎壓符合標示，胎紋無低於磨耗指示點" },
+            { id: "c2", title: "前/後煞車皮厚度", desc: "高山連續下坡極度吃煞車，確認煞車油與皮尚充足" },
+            { id: "c3", title: "鏈條鬆緊度與潤滑", desc: "檢查鏈條是否有過鬆、死節或缺乏鏈條油狀況" },
+            { id: "c4", title: "人身安全防護裝備", desc: "防摔衣/褲、全罩安全帽、手套及高階車靴是否完備" },
+            { id: "c5", title: "山區午後雨具備用", desc: "高山氣候多變，隨車攜帶兩截式雨衣與防水袋" },
+            { id: "c6", title: "燈光與方向燈正常", desc: "大燈、煞車燈及雙黃警示燈是否皆能正常作動" }
+        ];
+
+        let selectedRoad = roadData[0]; // Default selected road
+        let chartInstance = null;
+
+        // On DOM Load Initialize
+        window.onload = function() {
+            renderRoadCards(roadData);
+            initElevationChart(selectedRoad);
+            updateRouteDetailPanel(selectedRoad);
+            renderCommunityReports('all');
+            renderChecklist();
+            populateModalRoadSelect();
+        };
+
+        // Switch Active Application Tabs
+        function switchTab(tabId) {
+            const tabs = ['explore', 'community', 'safety'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                
+                // Desktop nav styles
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    if (t === tabId) {
+                        navBtn.className = "px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition bg-brand-orange text-white";
+                    } else {
+                        navBtn.className = "px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition text-slate-300 hover:text-white hover:bg-slate-800";
+                    }
+                }
+
+                // Mobile nav styles
+                const mNavBtn = document.getElementById(`mobile-nav-${t}`);
+                if (mNavBtn) {
+                    if (t === tabId) {
+                        mNavBtn.className = "flex-1 py-3 text-center text-brand-orange border-b-2 border-brand-orange flex flex-col items-center gap-1 font-bold";
+                    } else {
+                        mNavBtn.className = "flex-1 py-3 text-center text-slate-400 flex flex-col items-center gap-1";
+                    }
+                }
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        }
+
+        // Render Road Cards
+        function renderRoadCards(roads) {
+            const container = document.getElementById('road-cards-container');
+            container.innerHTML = '';
+
+            if (roads.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-brand-card p-8 rounded-xl border border-brand-border text-center text-slate-400 space-y-2">
+                        <i class="fa-solid fa-map-location text-3xl text-slate-600"></i>
+                        <p class="font-bold">找不到符合條件的山路路線</p>
+                        <p class="text-xs">請試著放寬搜尋條件或重設篩選器。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            roads.forEach(road => {
+                const stars = '★'.repeat(road.difficulty) + '☆'.repeat(5 - road.difficulty);
+                const isSelected = selectedRoad.id === road.id;
+
+                const cardHtml = `
+                    <div onclick="selectRoad('${road.id}')" class="bg-brand-card hover:border-brand-orange/60 border ${isSelected ? 'border-brand-orange neon-border' : 'border-brand-border'} rounded-xl p-5 transition cursor-pointer relative space-y-3 group">
+                        
+                        <!-- Top Row: Route Code & Status Tag -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-slate-900 text-brand-cyan border border-brand-cyan/40 px-2.5 py-0.5 rounded font-mono font-bold text-xs">
+                                    ${road.code}
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">
+                                    ${road.regionName} / ${road.typeName}
+                                </span>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${road.statusBg}">
+                                ${road.statusName}
+                            </span>
+                        </div>
+
+                        <!-- Main Title & Difficulty -->
+                        <div class="flex items-baseline justify-between">
+                            <h3 class="text-lg font-black text-white group-hover:text-brand-orange transition">
+                                ${road.name}
+                            </h3>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block">技術度/壓迫度</span>
+                                <span class="text-brand-yellow text-sm font-bold tracking-widest">${stars}</span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                            ${road.description}
+                        </p>
+
+                        <!-- Key Metrics Grid -->
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">最高海拔</span>
+                                <span class="font-bold text-slate-200">${road.maxAlt} m</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">總長度</span>
+                                <span class="font-bold text-slate-200">${road.length} km</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">區間/測速警示</span>
+                                <span class="font-bold text-red-400">${road.speedTraps.length} 處重點</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer indicator -->
+                        <div class="flex justify-end items-center text-xs text-brand-orange font-bold gap-1 pt-1">
+                            <span>點擊載入剖面圖與細節</span>
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        // Select a Road and update Profile Visualizer
+        function selectRoad(roadId) {
+            selectedRoad = roadData.find(r => r.id === roadId);
+            renderRoadCards(getFilteredRoads());
+            updateRouteDetailPanel(selectedRoad);
+            updateElevationChart(selectedRoad);
+        }
+
+        // Update Details Panel
+        function updateRouteDetailPanel(road) {
+            document.getElementById('profile-title').innerHTML = `<i class="fa-solid fa-route text-brand-orange"></i> ${road.name}`;
+            document.getElementById('profile-subtitle').innerText = `${road.code} - ${road.regionName}標誌性跑山路線`;
+            document.getElementById('profile-badge').innerText = `${road.length} km / ${road.maxAlt}m`;
+            document.getElementById('info-max-alt').innerText = `${road.maxAlt} m`;
+            document.getElementById('info-length').innerText = `${road.length} km`;
+
+            // Gas stations
+            const gasList = document.getElementById('info-gas-stations');
+            gasList.innerHTML = road.gasStations.map(g => `<li>${g}</li>`).join('');
+
+            // Speed traps
+            const trapList = document.getElementById('info-speed-traps');
+            trapList.innerHTML = road.speedTraps.map(t => `<li class="text-red-300">${t}</li>`).join('');
+        }
+
+        // Initialize Elevation Profile Chart
+        function initElevationChart(road) {
+            const ctx = document.getElementById('elevationChart').getContext('2d');
+            
+            const labels = road.elevationProfile.map(p => `${p.km}km (${p.name})`);
+            const dataPoints = road.elevationProfile.map(p => p.alt);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '海拔高度 (公尺)',
+                        data: dataPoints,
+                        borderColor: '#FF5500',
+                        backgroundColor: 'rgba(255, 85, 0, 0.15)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#FFCC00',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `海拔高度: ${context.parsed.y} 公尺`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8', font: { size: 10 } },
+                            grid: { color: '#334155', drawBorder: false }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8', font: { size: 10 } },
+                            grid: { color: '#334155', drawBorder: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Chart Content when new road selected
+        function updateElevationChart(road) {
+            if (!chartInstance) return;
+            chartInstance.data.labels = road.elevationProfile.map(p => `${p.name} (${p.km}k)`);
+            chartInstance.data.datasets[0].data = road.elevationProfile.map(p => p.alt);
+            chartInstance.update();
+        }
+
+        // Filter Roads Search Logic
+        function getFilteredRoads() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const region = document.getElementById('filter-region').value;
+            const type = document.getElementById('filter-type').value;
+            const status = document.getElementById('filter-status').value;
+
+            return roadData.filter(road => {
+                const matchSearch = road.name.toLowerCase().includes(search) || road.code.toLowerCase().includes(search);
+                const matchRegion = region === 'all' || road.region === region;
+                const matchType = type === 'all' || road.type === type;
+                const matchStatus = status === 'all' || road.status === status;
+
+                return matchSearch && matchRegion && matchType && matchStatus;
+            });
+        }
+
+        function filterRoads() {
+            const filtered = getFilteredRoads();
+            renderRoadCards(filtered);
+        }
+
+        function setQuickFilter(keyword) {
+            document.getElementById('search-input').value = keyword;
+            filterRoads();
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-region').value = 'all';
+            document.getElementById('filter-type').value = 'all';
+            document.getElementById('filter-status').value = 'all';
+            filterRoads();
+        }
+
+        // TAB 2: COMMUNITY REPORTS SYSTEM
+        function renderCommunityReports(filterType) {
+            const container = document.getElementById('reports-list-container');
+            container.innerHTML = '';
+
+            let filtered = liveReports;
+            if (filterType !== 'all') {
+                filtered = liveReports.filter(r => r.type === filterType);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-brand-card p-8 rounded-xl border border-brand-border text-center text-slate-400">
+                        目前該分類尚無最新車友回報。
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(report => {
+                const itemHtml = `
+                    <div class="bg-brand-card border border-brand-border hover:border-slate-700 p-4 rounded-xl space-y-2 transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-white text-sm">${report.roadName}</span>
+                                <span class="text-xs text-brand-orange font-mono font-semibold">${report.location}</span>
+                            </div>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full border ${report.badgeClass} font-bold">
+                                ${report.typeName}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                            ${report.content}
+                        </p>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-helmet-safety text-slate-500"></i> 回報車友: ${report.author}</span>
+                            <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${report.time}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += itemHtml;
+            });
+        }
+
+        function filterCommunityReports(type) {
+            // update active button UI
+            document.querySelectorAll('.report-filter-btn').forEach(btn => {
+                btn.className = "report-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700";
+            });
+            event.target.className = "report-filter-btn px-3 py-1.5 rounded-lg bg-brand-orange text-white font-bold";
+            
+            renderCommunityReports(type);
+        }
+
+        // Modal Logic
+        function openReportModal() {
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+
+        function populateModalRoadSelect() {
+            const select = document.getElementById('report-road-select');
+            roadData.forEach(road => {
+                select.innerHTML += `<option value="${road.id}">${road.name}</option>`;
+            });
+        }
+
+        function submitReport(event) {
+            event.preventDefault();
+            const roadId = document.getElementById('report-road-select').value;
+            const roadObj = roadData.find(r => r.id === roadId);
+            const type = document.getElementById('report-type-select').value;
+            const location = document.getElementById('report-location-input').value;
+            const content = document.getElementById('report-content-input').value;
+
+            let typeName = "🚨 執法/測速";
+            let badgeClass = "bg-red-500/20 text-red-400 border-red-500/40";
+            if (type === 'hazard') {
+                typeName = "⚠️ 道路障礙";
+                badgeClass = "bg-orange-500/20 text-orange-400 border-orange-500/40";
+            } else if (type === 'weather') {
+                typeName = "🌫️ 天候大霧";
+                badgeClass = "bg-amber-500/20 text-amber-400 border-amber-500/40";
+            } else if (type === 'traffic') {
+                typeName = "🏍️ 車流狀況";
+                badgeClass = "bg-blue-500/20 text-blue-400 border-blue-500/40";
+            }
+
+            const newReport = {
+                id: Date.now(),
+                roadId: roadId,
+                roadName: roadObj ? roadObj.name : "熱門山路",
+                type: type,
+                typeName: typeName,
+                badgeClass: badgeClass,
+                location: location,
+                content: content,
+                time: "剛剛",
+                author: "騎士車友"
+            };
+
+            liveReports.unshift(newReport);
+            renderCommunityReports('all');
+            closeReportModal();
+            showToast("感謝通報！路況訊息已成功更新於社群牆。");
+            document.getElementById('report-form').reset();
+            
+            // Increment report count badge
+            const badge = document.getElementById('report-badge-count');
+            badge.innerText = parseInt(badge.innerText) + 1;
+        }
+
+        // TAB 3: SAFETY CHECKLIST
+        function renderChecklist() {
+            const container = document.getElementById('checklist-items');
+            container.innerHTML = '';
+
+            checklistItems.forEach(item => {
+                const itemHtml = `
+                    <label class="flex items-start gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+                        <input type="checkbox" onchange="updateChecklistProgress()" class="checklist-checkbox mt-1 w-4 h-4 rounded text-brand-orange focus:ring-brand-orange bg-slate-800 border-slate-700">
+                        <div>
+                            <span class="text-xs font-bold text-slate-200 block">${item.title}</span>
+                            <span class="text-[11px] text-slate-400 block mt-0.5">${item.desc}</span>
+                        </div>
+                    </label>
+                `;
+                container.innerHTML += itemHtml;
+            });
+        }
+
+        function updateChecklistProgress() {
+            const total = checklistItems.length;
+            const checked = document.querySelectorAll('.checklist-checkbox:checked').length;
+            const progressEl = document.getElementById('checklist-progress');
+            
+            progressEl.innerText = `${checked} / ${total} 完成`;
+            if (checked === total) {
+                progressEl.className = "text-sm font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30";
+                showToast("🎉 全數安全檢查通過！祝您跑山愉快，平安歸來！");
+            } else {
+                progressEl.className = "text-sm font-bold text-brand-orange bg-brand-orange/10 px-3 py-1 rounded-full border border-brand-orange/30";
+            }
+        }
+
+        // Toast Notification System
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "bg-slate-900 border border-brand-orange text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce";
+            toast.innerHTML = `<i class="fa-solid fa-bell text-brand-orange"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
