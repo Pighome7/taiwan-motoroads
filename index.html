@@ -229,6 +229,14 @@
                             <span id="profile-badge" class="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-full font-mono border border-slate-700">未選擇</span>
                         </div>
 
+                        <!-- One-Click Google Navigation Button -->
+                        <div class="pt-1">
+                            <a id="nav-google-btn" href="#" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+                                <i class="fa-solid fa-diamond-turn-right text-base"></i>
+                                <span>開啟 Google 地圖進行導航</span>
+                            </a>
+                        </div>
+
                         <!-- Chart Canvas -->
                         <div class="relative h-56 w-full bg-slate-900/60 rounded-lg p-2 border border-slate-800">
                             <canvas id="elevationChart"></canvas>
@@ -466,10 +474,12 @@
                 length: 58,
                 maxAlt: 538,
                 difficulty: 4,
+                speedLimit: "40 - 50 km/h",
                 status: "smooth",
                 statusName: "路況良好",
                 statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
-                description: "台灣北部最經典機車跑山聖地，以多彎及經典財茂彎聞名，沿途茶園景色宜人，全線多處實施區間測速。",
+                navUrl: "https://www.google.com/maps/dir/?api=1&origin=新店捷運站&destination=石牌縣界公園&travelmode=bicycling",
+                description: "台灣北部最經典機車跑山聖地，以多彎及經典財茂彎聞名，沿途茶園景色宜人，全線多處實施區間測速與固定式照相。",
                 elevationProfile: [
                     { km: 0, alt: 20, name: "新店" },
                     { km: 15, alt: 480, name: "海倫咖啡" },
@@ -479,7 +489,11 @@
                     { km: 58, alt: 10, name: "頭城" }
                 ],
                 gasStations: ["中油坪林站 (19:00關閉)", "中油頭城站"],
-                speedTraps: ["19K - 23.1K 區間測速", "26.2K - 32.3K 區間測速", "56.6K 追風點/移動式測速"]
+                speedTraps: [
+                    "🚨 19K - 23.1K 區間測速 (速限 40 km/h)",
+                    "🚨 26.2K - 32.3K 區間測速 (速限 40 km/h)",
+                    "📸 56.6K 追風點/移動式測速與科技執法"
+                ]
             },
             {
                 id: "wuling",
@@ -492,9 +506,11 @@
                 length: 41,
                 maxAlt: 3275,
                 difficulty: 5,
+                speedLimit: "30 - 40 km/h",
                 status: "fog",
                 statusName: "濃霧 / 氣溫低",
                 statusBg: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+                navUrl: "https://www.google.com/maps/dir/?api=1&destination=武嶺標高3275公尺",
                 description: "公路最高點武嶺所在地，高山大景極具震撼力。氣候變化劇烈，午後極易有大霧與低溫降雨。",
                 elevationProfile: [
                     { km: 0, alt: 1148, name: "霧社" },
@@ -505,7 +521,10 @@
                     { km: 41, alt: 2565, name: "大禹嶺" }
                 ],
                 gasStations: ["中油清境站 (全台最高24hr之一)", "中油關原站 (知名肉粽)"],
-                speedTraps: ["清境農場路段常有警察攔檢", "翠峰至昆陽路段狹窄請勿違規超車"]
+                speedTraps: [
+                    "📸 8.2K 清境農場固定測速桿 (速限 30 km/h)",
+                    "🚨 翠峰至昆陽狹窄路段（常有警車機動攔檢壓線）"
+                ]
             },
             {
                 id: "136",
@@ -518,9 +537,11 @@
                 length: 22,
                 maxAlt: 720,
                 difficulty: 4,
+                speedLimit: "40 km/h",
                 status: "smooth",
                 statusName: "路況良好",
                 statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+                navUrl: "https://www.google.com/maps/dir/?api=1&origin=護國清涼寺&destination=赤崁頂",
                 description: "台中騎士熱門練角聖地，髮夾彎密集（赤崁頂為代表地標）。路面品質優良但部分路段盲彎多。",
                 elevationProfile: [
                     { km: 0, alt: 100, name: "太平一號橋" },
@@ -529,7 +550,10 @@
                     { km: 22, alt: 250, name: "國姓萊爾富" }
                 ],
                 gasStations: ["太平長龍路加油站", "國姓中油站"],
-                speedTraps: ["136縣道 36K-40K 常有三腳架固定式測速", "赤崁頂周邊盲彎請勿壓線"]
+                speedTraps: [
+                    "📸 136縣道 36.5K 雙向固定照相 (速限 40 km/h)",
+                    "🚨 39K - 42K 護國清涼寺至赤崁頂區間常有三腳架"
+                ]
             },
             {
                 id: "alishan",
@@ -542,9 +566,11 @@
                 length: 88,
                 maxAlt: 2200,
                 difficulty: 3,
+                speedLimit: "30 - 50 km/h",
                 status: "construction",
                 statusName: "局部施工管制",
                 statusBg: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+                navUrl: "https://www.google.com/maps/dir/?api=1&origin=觸口遊客中心&destination=阿里山國家森林遊樂區",
                 description: "連接嘉義市區與阿里山國家森林遊樂區，路幅寬廣，風景優美，唯午後經常起霧且遊覽車較多。",
                 elevationProfile: [
                     { km: 0, alt: 50, name: "中埔" },
@@ -554,7 +580,10 @@
                     { km: 88, alt: 2200, name: "阿里山森林遊樂區" }
                 ],
                 gasStations: ["中油石棹站 (19:00關畢)", "中油阿里山站"],
-                speedTraps: ["觸口段常有定點測速", "隙頂至石棹段午後濃霧警示"]
+                speedTraps: [
+                    "📸 39.5K 觸口平原段固定測速 (速限 50 km/h)",
+                    "📸 72K 石棹前後路段科技執法（違規超車拍照）"
+                ]
             },
             {
                 id: "wutai",
@@ -567,9 +596,11 @@
                 length: 48,
                 maxAlt: 1000,
                 difficulty: 4,
+                speedLimit: "30 - 50 km/h",
                 status: "smooth",
                 statusName: "路況良好",
                 statusBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+                navUrl: "https://www.google.com/maps/dir/?api=1&origin=水門加油站&destination=霧台谷川大橋觀景台",
                 description: "南部機車跑山天堂，途經谷川大橋（台灣最高橋墩），沿途原住民部落文化特色濃厚。",
                 elevationProfile: [
                     { km: 0, alt: 80, name: "水門" },
@@ -579,7 +610,10 @@
                     { km: 48, alt: 1000, name: "阿禮部落" }
                 ],
                 gasStations: ["水門中油加油站 (進入山區最後補給)"],
-                speedTraps: ["水門至三地門段限速50", "谷川大橋觀景台前有不定期測速"]
+                speedTraps: [
+                    "📸 26.5K 三地門路段固定測速照相 (速限 40 km/h)",
+                    "🚨 谷川大橋前轉彎處常有不定期移動式測速"
+                ]
             },
             {
                 id: "yangjin",
@@ -592,9 +626,11 @@
                 length: 38,
                 maxAlt: 800,
                 difficulty: 3,
+                speedLimit: "40 km/h",
                 status: "warning",
                 statusName: "注意落石/濕滑",
                 statusBg: "bg-red-500/20 text-red-400 border-red-500/40",
+                navUrl: "https://www.google.com/maps/dir/?api=1&origin=士林官邸&destination=金山老街",
                 description: "貫穿陽明山國家公園連接金山，多連續急彎與硫磺氣候，冬季受東北季風影響經常路面濕滑。",
                 elevationProfile: [
                     { km: 0, alt: 10, name: "金山" },
@@ -604,7 +640,10 @@
                     { km: 38, alt: 20, name: "台北士林" }
                 ],
                 gasStations: ["金山中油站", "士林仰德加油站"],
-                speedTraps: ["馬槽橋前直線速限 40km/h", "小油坑路段常有檢舉與測速"]
+                speedTraps: [
+                    "📸 馬槽橋前直線路段固定照相 (速限 40 km/h)",
+                    "📸 小油坑及竹子湖路口頻繁機動檢舉測速"
+                ]
             }
         ];
 
@@ -736,14 +775,14 @@
                 const cardHtml = `
                     <div onclick="selectRoad('${road.id}')" class="bg-brand-card hover:border-brand-orange/60 border ${isSelected ? 'border-brand-orange neon-border' : 'border-brand-border'} rounded-xl p-5 transition cursor-pointer relative space-y-3 group">
                         
-                        <!-- Top Row: Route Code & Status Tag -->
+                        <!-- Top Row: Route Code, Speed Limit & Status Tag -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="bg-slate-900 text-brand-cyan border border-brand-cyan/40 px-2.5 py-0.5 rounded font-mono font-bold text-xs">
                                     ${road.code}
                                 </span>
-                                <span class="text-xs text-slate-400 font-medium">
-                                    ${road.regionName} / ${road.typeName}
+                                <span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded font-mono font-bold text-[11px] flex items-center gap-1">
+                                    <i class="fa-solid fa-gauge-high"></i> 速限 ${road.speedLimit}
                                 </span>
                             </div>
                             <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${road.statusBg}">
@@ -767,26 +806,24 @@
                             ${road.description}
                         </p>
 
-                        <!-- Key Metrics Grid -->
-                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
-                            <div>
-                                <span class="text-slate-500 block text-[10px]">最高海拔</span>
-                                <span class="font-bold text-slate-200">${road.maxAlt} m</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-500 block text-[10px]">總長度</span>
-                                <span class="font-bold text-slate-200">${road.length} km</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-500 block text-[10px]">區間/測速警示</span>
-                                <span class="font-bold text-red-400">${road.speedTraps.length} 處重點</span>
-                            </div>
+                        <!-- Speed Trap Highlight Bar -->
+                        <div class="bg-slate-900/90 border border-red-500/20 p-2 rounded-lg text-xs flex items-center justify-between text-red-300">
+                            <span class="flex items-center gap-1.5 font-bold">
+                                <i class="fa-solid fa-camera text-red-400"></i>
+                                測速與執法警示 (${road.speedTraps.length} 處)
+                            </span>
+                            <span class="text-[11px] text-slate-400 underline">查看詳情</span>
                         </div>
 
-                        <!-- Footer indicator -->
-                        <div class="flex justify-end items-center text-xs text-brand-orange font-bold gap-1 pt-1">
-                            <span>點擊載入剖面圖與細節</span>
-                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        <!-- Quick Navigation Row -->
+                        <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-800">
+                            <a href="${road.navUrl}" target="_blank" onclick="event.stopPropagation();" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition">
+                                <i class="fa-solid fa-diamond-turn-right"></i> Google 導航
+                            </a>
+                            <div class="text-brand-orange font-bold flex items-center gap-1">
+                                <span>載入高度剖面</span>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -810,13 +847,19 @@
             document.getElementById('info-max-alt').innerText = `${road.maxAlt} m`;
             document.getElementById('info-length').innerText = `${road.length} km`;
 
+            // Update Navigation Button Link
+            const navBtn = document.getElementById('nav-google-btn');
+            if (navBtn) {
+                navBtn.href = road.navUrl;
+            }
+
             // Gas stations
             const gasList = document.getElementById('info-gas-stations');
             gasList.innerHTML = road.gasStations.map(g => `<li>${g}</li>`).join('');
 
             // Speed traps
             const trapList = document.getElementById('info-speed-traps');
-            trapList.innerHTML = road.speedTraps.map(t => `<li class="text-red-300">${t}</li>`).join('');
+            trapList.innerHTML = road.speedTraps.map(t => `<li class="text-red-300 font-bold">${t}</li>`).join('');
         }
 
         // Initialize Elevation Profile Chart
